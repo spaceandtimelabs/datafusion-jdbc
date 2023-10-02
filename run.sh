@@ -19,21 +19,6 @@
 # hadoop classpath is used for object_store-hdfs to get hadoop client
 export CLASSPATH=$CLASSPATH:`hadoop classpath --glob`
 
-rotate_logs ()
-{
-    log=$1
-    num=5
-
-    if [ -f "$log" ]; then # rotate logs
-        while [ $num -gt 1 ]; do
-            prev=`expr $num - 1`
-            [ -f "$log.$prev" ] && mv "$log.$prev" "$log.$num"
-            num=$prev
-        done
-        mv "$log" "$log.$num";
-    fi
-}
-
 # Check if DELTA_DIR is not set or is empty
 if [ -z "$DELTA_DIR" ]; then
     echo "WARNING: DELTA_DIR environment variable is not set. Using /delta as default."
@@ -50,19 +35,10 @@ if [ -z "PORT" ]; then
     PORT="50051"
 fi
 
-mkdir -p ./log
-
-stdout_log="./log/stdout.log"
-stderr_log="./log/stderr.log"
-
-# Rotate logs
-rotate_logs "$stdout_log"
-rotate_logs "$stderr_log"
-
 if [ -z "$MEM_LIMIT" ]; then
   echo "Starting datafusion-jdbc with DELTA_DIR=$DELTA_DIR, PORT=$PORT, LOG_LEVEL=$LOG_LEVEL"
-  datafusion-jdbc -d $DELTA_DIR -p $PORT -l $LOG_LEVEL >> "$stdout_log" 2>> "$stderr_log"
+  datafusion-jdbc -d $DELTA_DIR -p $PORT -l $LOG_LEVEL 2>&1
 else
   echo "Starting datafusion-jdbc with DELTA_DIR=$DELTA_DIR, PORT=$PORT, MEM_LIMIT=$MEM_LIMIT, LOG_LEVEL=$LOG_LEVEL"
-  datafusion-jdbc -d $DELTA_DIR -p $PORT -m $MEM_LIMIT -l $LOG_LEVEL >> "$stdout_log" 2>> "$stderr_log"
+  datafusion-jdbc -d $DELTA_DIR -p $PORT -m $MEM_LIMIT -l $LOG_LEVEL 2>&1
 fi
